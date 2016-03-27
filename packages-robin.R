@@ -1,0 +1,7 @@
+install.packages("dplyr")
+install.packages("reshape2")
+install.packages("caret")
+install.packages("ggplot2")
+install.packages("GGally")
+install.packages("mlbench")
+install.packages("rvest")

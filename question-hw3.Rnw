@@ -1,0 +1,38 @@
+\documentclass{article}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+I have a question on box cox transformation.
+<<>>=
+library(e1071)
+library(mlbench)
+library(caret)
+data(Glass)
+skewValues <- apply(Glass[,1:9], 2, skewness)
+skewValues
+@
+Based on the skewness, Ba and Fe are both skewed. So I decided to use boxcoxTrans/preProcess to transform them. 
+<<>>=
+
+BC = apply(Glass[,-10],2, BoxCoxTrans)
+BC[c(6,8,9)]
+@
+However, for K, Ba and Fe, the output shows that lamda cannot be estimated, thus no transformation is applied. Why is this the case?
+
+When I use preProcess, there are only 5 variables being transformed.
+<<>>=
+boxcoxValues = preProcess(Glass[,-10],method = "BoxCox")
+
+# transform variables
+GlassBC = predict(boxcoxValues, Glass[,-10])
+
+# check if skewness is resolved
+skewValues2 <- apply(GlassBC, 2, skewness)
+skewValues2
+
+@
+Variables like K, Ba, Fe are not transformed with BoxCox.
+Why?
+
+\end{document}

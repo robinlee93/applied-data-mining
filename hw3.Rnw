@@ -1,0 +1,288 @@
+
+
+\title{HW3 For Applied Data Mining \\ STAT W 3026-4026 \\ Spring 2016 \\ Columbia University}
+\author{
+       Robin Lee  \\
+               rcl2136\\
+      QMSS MA}
+\date{\today}
+
+\documentclass[12pt]{article}
+
+\makeatletter
+\newcommand*{\rom}[1]{\expandafter\@slowromancap\romannumeral #1@}
+\makeatother
+\usepackage{amsthm,amsmath,graphicx,csquotes}
+\usepackage[
+         colorlinks=true,
+         linkcolor=black,
+         citecolor=black,
+         urlcolor=black]
+         {hyperref}  
+         
+\newtheorem{thm}{Theorem}
+\newtheorem{defn}{Definition}
+%\newtheorem{rem}{Remark}
+%\newtheorem{lem}{Lemma}
+\newtheorem{prop}{Property}
+
+\setkeys{Gin}{width=0.8\textwidth}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+\maketitle
+
+%\begin{abstract}
+
+%\end{abstract}
+
+\section{Exercise 3.1}
+The UC Irvine Machine Learning Repository6 contains a data set related to glass identification. The data consist of 214 glass samples labeled as one of seven class categories. There are nine predictors, including the refractive index and percentages of eight elements: Na, Mg, Al, Si, K, Ca, Ba, and Fe.
+
+The data can be accessed via:
+<<>>=
+library(ggplot2)
+library(GGally)
+library(dplyr)
+library(mlbench)
+data(Glass)
+glimpse(Glass)
+@
+
+\begin{itemize}
+\item 
+Using visualizations, explore the predictor variables to understand their distributions as well as the relationships between predictors.
+
+My options are scatterplot matrix and histogram. Thus, I will use ggpairs in GGally package to get the plot. I also adjust the transparency to make scatter plots easier to read.
+<<fig=TRUE>>=
+ggpairs(Glass, columns= 1:9, 
+        mapping = ggplot2::aes(alpha = 0.2))
+@
+
+The only two predictors that have a correlation coefficient above 0.5 or below -0.5 are RI and Ca.
+
+\item
+Do there appear to be any outliers in the data? Are any predictors skewed?
+
+Yes, from the histogras, Al, K, CA, Ba, and Fe are skewed to the right. Mg is skewed to the left and has a smaller peak on the left. There are some samples with high values in K, Ca and Ba.
+
+I will calculate skewness to confirm.
+<<>>=
+library(e1071)
+skewValues <- apply(Glass[,1:9], 2, skewness)
+skewValues
+@
+The result is similar to what I got judging from the histograms.
+
+\item
+Are there any relevant transformations of one or more predictors that might improve the classification model?
+
+Yes, for the skewed variables, I should transform the predictors. I will use Box-cox test to find out what transformation is needed.
+<<>>=
+library(caret)
+
+boxcoxValues = preProcess(Glass[,-10],method = "BoxCox")
+boxcoxValues
+
+BC = apply(Glass[,-10],2, BoxCoxTrans)
+
+# transform variables
+GlassBC = predict(boxcoxValues, Glass[,-10])
+
+# check if skewness is resolved
+skewValues2 <- apply(GlassBC, 2, skewness)
+skewValues2
+
+@
+Some variables are not transformed with BoxCox. I will try to center and scale them!
+
+<<>>=
+normalValues <- preProcess(Glass[,-10], method = c("center", "scale"))
+normalValues
+
+GlassNormal = predict(normalValues, Glass[,-10])
+skewValues3 = apply(GlassNormal,2,skewness)
+skewValues3
+@
+All 9 variables are scaled. But the skewness does not change. This makes sense actually. Normalizing the predictors does not change the shape.
+
+I suspect some of these variables contain zeros. That's why log transformation is not possible.
+<<>>=
+log = log(Glass[,c(3,6,8,9)])
+
+sum(Glass[,c(3,6,8,9)]==0)
+@
+Yes, lots of zeros.
+
+I will try squared root on these transformatioin
+<<>>=
+sqrt = sqrt(Glass[,c(3,6,8,9)])
+skewValues4 = apply(sqrt,2,skewness)
+skewValues4
+@
+Skewness is improved! I will use BoxCox on predictors without 0s, and squared root on predictors with 0s. 
+
+
+
+\end{itemize}
+
+\section{Exercise 3.2}
+
+The soybean data can also be found at the UC Irvine Machine Learning Repository. Data were collected to predict disease in 683 soybeans. The 35 predictors are mostly categorical and include information on the environmental conditions (e.g., temperature, precipitation) and plant conditions (e.g., left spots, mold growth). The outcome labels consist of 19 distinct classes
+\begin{itemize}
+\item
+Investigate the frequency distributions for the categorical predictors. Are any of the distributions degenerate in the ways discussed earlier in this chapter?
+
+I use frequency ratio to detect degenerate distributioins and near-zero variance. 
+
+<<>>=
+library(mlbench)
+data(Soybean)
+distribution = apply(Soybean, 2, table)
+
+freqRatio = function(vector){
+  tab = table(vector)
+  tab.sort = sort(tab, TRUE)
+  return(tab.sort[1]/tab.sort[2])
+}
+
+frequencyRatio = apply(Soybean, 2, freqRatio)
+sum(frequencyRatio > 20)
+@
+Yes, there are 3 variables that have frequency ratio above 20. 
+
+I can also use nearZeroVar to detect near zero variance predictors. 
+<<>>=
+nearZeroVar(Soybean)
+length(nearZeroVar(Soybean))
+@
+
+\item
+Roughly 18 \% of the data are missing. Are there particular predictors that are more likely to be missing? Is the pattern of missing data related to the classes?
+
+"it is important to know if the pattern of missing data is related to
+the outcome. This is called 'informative missingness' since the missing data
+pattern is instructional on its own" - Max Kuhn.
+
+I calculate proportion of missing values for each variable. I categorize those variables with more than 10\% missing values as high NA group. Then, I create cross-tabulation between those high NA variable with class variable to see if there's structural information from the missing values. 
+
+<<>>=
+NAproportion = function(predictor){
+  #this function calculapredictorrtion of missing values within a variable
+  NAcount = sum(is.na(predictor))
+  return(NAcount/length(predictor))
+}
+
+sort(apply(Soybean,2, NAproportion), TRUE)
+
+# find out which variables contain missing value above certain threshold
+highNAindex = which(apply(Soybean,2, NAproportion) > 0.10)
+highNAindex
+
+@
+From the high NA index, there are some predictors that have higher missing values.
+I will then look at how NAs are distributed within these predictors.
+
+<<>>=
+# find out how the NAs are distributed 
+crosstab = function(predictor){
+  # this function creates cross tabluation between a given variable and outcome
+  tab = table(Soybean$Class, predictor, useNA = "always")
+  return(tab[-nrow(tab),])
+}
+
+NApattern = apply(Soybean[,highNAindex], 2, crosstab)
+@
+Looking at the cross tabluation, there're a few classes that are associated with missing values. 
+
+I want to turn a table into a plot. I will plot each data frame as a horizontal stacked bar chart.
+<<fig=TRUE, height=9, width=10 >>=
+
+table2stacked = function(NApattern,i){
+  var = names(NApattern[i])
+  table1 = NApattern[i][[1]]
+
+  df = as.data.frame(table1)
+  df[,"class"] = rownames(df)
+
+  # wide to long, because it's easier to plot
+
+  library(reshape2)
+  df3 = melt(df)
+  names(df3) = c("class","response", "frequency")
+  levels(df3$response)[!is.na(levels(df3$response))] <- "non-missing"
+  df3$response = addNA(df3$response)
+  levels(df3$response)[is.na(levels(df3$response))] <- "missing"
+  
+  
+  p = ggplot(df3, aes(x = class, y = frequency, fill = response))+
+        geom_bar(stat = "identity")+
+        scale_fill_manual(values=c("#56B4E9", "#D55E00", "grey"))+
+        coord_flip()+
+        labs(title=paste( "Variable ",var),
+              x = ("Types of Soybean"),
+              y = (paste("Frequency of missing values"))
+            )+
+        theme_classic()+
+        theme(legend.position="none")+
+        scale_x_discrete(breaks=NULL)
+        
+
+  return(p)
+}
+
+library(ggplot2)
+library(gridExtra)
+
+plot_list = list()
+length(NApattern)
+for(i in 1:19){
+  p = table2stacked(NApattern, i)
+  plot_list[[i]] = p
+  }
+
+grid.arrange(grobs = plot_list, ncol=4)
+
+@
+
+\item
+Develop a strategy for handling missing data, either by eliminating predictors or imputation.
+
+In this dataset, the predictors with large proportion of missing values contain informative missingness. Therefore, I'd use imputation or tree-based method.
+\end{itemize}
+
+\section{Exercise 3.3}
+Chapter 5 introduces Quantitative Structure-Activity Relationship (QSAR) modeling where the characteristics of a chemical compound are used to predict other chemical properties. The caret package contains a QSAR data set from Mente and Lombardo (2005). Here, the ability of a chemical to permeate the blood-brain barrier was experimentally determined for 208 compounds. 134 descriptors were measured for each compound.
+\begin{itemize}
+\item
+Start R and use these commands to load the data:
+<<>>=
+library(caret)
+data(BloodBrain)
+@
+use ?BloodBrain to see more details
+The numeric outcome is contained in the vector logBBB while the predictors
+are in the data frame bbbDescr.
+\item
+Do any of the individual predictors have degenerate distributions?
+<<>>=
+nearZeroVar(bbbDescr)
+length(nearZeroVar(bbbDescr))
+
+@
+Yes, there are 7 predictors that have frequency ratio below 0.05.
+
+\item
+Generally speaking, are there strong relationships between the predictor
+data? If so, how could correlations in the predictor set be reduced?
+Does this have a dramatic effect on the number of predictors available for
+modeling?
+<<>>=
+correlation = cor(bbbDescr)
+highCorr <- findCorrelation(correlation, cutoff = .75)
+length(highCorr)
+ncol(bbbDescr)
+@
+Yes, there are some that are highly correlated with each other. I can eliminate columns that are correlated with each above 0.75. This will remove 66 predictors, which amount of half the original data.
+\end{itemize}
+\end{document}

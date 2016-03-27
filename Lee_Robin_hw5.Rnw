@@ -1,0 +1,226 @@
+
+
+\title{HW5 For Applied Data Mining \\ STAT W 3026-4026 \\ Spring 2016 \\ Columbia University}
+\author{
+       Robin Lee  \\
+               rcl2136\\
+        QMSS MA}
+\date{\today}
+
+\documentclass[12pt]{article}
+
+\makeatletter
+\newcommand*{\rom}[1]{\expandafter\@slowromancap\romannumeral #1@}
+\makeatother
+\usepackage{amsthm,amsmath,graphicx,csquotes}
+\usepackage[
+         colorlinks=true,
+         linkcolor=black,
+         citecolor=black,
+         urlcolor=black]
+         {hyperref}  
+         
+\newtheorem{thm}{Theorem}
+\newtheorem{defn}{Definition}
+%\newtheorem{rem}{Remark}
+%\newtheorem{lem}{Lemma}
+\newtheorem{prop}{Property}
+
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+\maketitle
+
+
+\section{Instruction}
+For the Boston Housing Data, firstpartition the data as training (2/3) and testing (1/3).
+Then fit each the following models in table below (Linear Reg, Lasso, ElasticNet, PLS, Neural Networks, MARS, SVM, K-NN) and present the performance
+measures for both training and test data. Use cross validation to tune the parameters. 
+
+\newpage
+
+\section{Result}
+\begin{table}[ht]
+
+\centering % used for centering table
+
+\begin{tabular}{c c c c c} % centered columns (4 columns)
+
+\hline %inserts horizontal lines
+
+& & Training & Testing \\ [0.5ex] % inserts table
+
+\hline %inserts horizontal lines
+
+& RMSE & R2 & RMSE & R2 \\ [0.5ex] % inserts table
+
+\hline % inserts single horizontal line
+
+Linear Regression & 4.515 & 0.775 & 5.587  & 0.614 \\ [0.5ex] % inserts table
+
+\hline %inserts horizontal lines
+
+Lasso & 4.528 & 0.769 & 5.613 & 0.609\\ [0.5ex] % inserts table
+
+\hline %inserts horizontal lines
+
+ElasticNet &  4.531 & 0.776 &  5.586 & 0.613\\ [0.5ex] % inserts table
+\hline %inserts horizontal lines
+
+PLS & 7.434 & 0.374 & 7.704 & 0.272\\ [0.5ex] % inserts table
+\hline %inserts horizontal lines
+
+Neural Networks & 23.578 &  NA &  23.019 & NA \\ [0.5ex] % inserts table
+
+\hline %inserts horizontal lines
+
+MARS & 3.108 &  0.888 & 4.718 & 0.735\\ [0.5ex] % inserts table
+
+\hline %inserts horizontal lines
+
+SVM & 3.667 & 0.855 & 4.566 & 0.744\\ [0.5ex] % inserts table
+
+\hline %inserts horizontal lines
+
+K-NN &  6.369 & 0.547 & 6.749 & 0.446\\ [0.5ex] % inserts table
+
+\hline %inserts horizontal lines
+
+\end{tabular}
+
+\label{table:nonlin} % is used to refer this table in the text
+
+\end{table}
+
+
+
+
+
+
+\section{Step 1 - Create Data Partition}
+
+<<>>=
+library(caret)
+library(MASS)
+data("Boston")
+
+set.seed(569)
+train_index <- createDataPartition(Boston$medv, p = 2/3, 
+                                  list = FALSE, times = 1)
+train <- Boston[train_index, ] 
+test <- Boston[-train_index, ]
+@
+
+\section{Set CV}
+<<>>=
+control <- trainControl( # 10 fold CV, repeated 10 times
+  method = 'repeatedcv', number = 10, repeats = 10
+  
+)
+@
+
+\section{Linear Regression}
+<<eval = FALSE>>=
+lm1 <- train(medv ~ . , data = train, 
+            method = "lm", 
+            trControl = control)
+lm1
+
+lm_test <- predict(lm1, test)
+postResample(lm_test, test$medv)
+@
+
+\section{Lasso}
+<<eval = FALSE>>=
+lasso1 <- train(medv ~ . , data = train, 
+            method = "lasso", 
+            trControl = control)
+lasso1
+
+lasso_test <- predict(lasso1, test)
+postResample(lasso_test, test$medv)
+@
+
+\section{Elastic Net}
+<<eval = FALSE>>=
+enet1 <- train(medv ~ . , data = train, 
+            method = "enet", 
+            trControl = control)
+enet1
+
+enet_test <- predict(enet1, test)
+postResample(enet_test, test$medv)
+@
+
+\section{Partial Least Square}
+<<eval = FALSE>>=
+pls1 <- train(medv ~ . , data = train, 
+            method = "pls", 
+            trControl = control)
+pls1
+
+pls_test <- predict(pls1, test)
+postResample(pls_test, test$medv)
+@
+
+\section{Neural Net}
+<<eval = FALSE>>=
+nnet1 <- train(medv ~ . , data = train, 
+            method = "nnet", 
+            trControl = control)
+nnet1
+
+nnet_test <- predict(nnet1, test)
+postResample(nnet_test, test$medv)
+@
+
+
+\section{MARS}
+<<>>=
+mars1 <- train(medv ~ . , data = train, 
+            method = "earth", 
+            trControl = control)
+mars1
+
+mars_test <- predict(mars1, test)
+postResample(mars_test, test$medv)
+@
+
+\section{SVM}
+<<eval = FALSE>>=
+svm1 <- train(medv ~ . , data = train, 
+            method = "svmRadial", 
+            trControl = control)
+svm1
+
+svm_test <- predict(svm1, test)
+postResample(svm_test, test$medv)
+@
+
+\section{K Nearest Neighbor}
+<<eval = FALSE>>=
+knn1 <- train(medv ~ . , data = train, 
+            method = "knn", 
+            trControl = control)
+knn1
+
+knn_test <- predict(knn1, test)
+postResample(knn_test, test$medv)
+@
+
+\section{Question 2}
+The lm.ridge function would not fit age twice. I created an age2 variable that is the same as age. Fitting it twice age with lm.ridge does not give the expected coefficient . It is not one half of the original coefficient. 
+<<eval=TRUE>>=
+
+ridgem <- lm(medv ~ age , data = train)
+ridgem
+
+train_add <- train
+train_add$age2 <- train_add$age
+ridgem2 <- lm.ridge(medv ~ age + age2, data = train_add)
+ridgem2$coef
+
+
+
+@
+\end{document}

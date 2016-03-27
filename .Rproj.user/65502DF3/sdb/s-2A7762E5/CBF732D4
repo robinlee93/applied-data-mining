@@ -1,0 +1,18 @@
+{
+    "contents" : "install.packages(\"dplyr\")\ninstall.packages(\"reshape2\")\ninstall.packages(\"caret\")\ninstall.packages(\"ggplot2\")\ninstall.packages(\"GGally\")\ninstall.packages(\"mlbench\")\ninstall.packages(\"rvest\")\n",
+    "created" : 1455135897520.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2239621482",
+    "id" : "CBF732D4",
+    "lastKnownWriteTime" : 1455152520,
+    "path" : "~/stat-apm/packages-robin.R",
+    "project_path" : "packages-robin.R",
+    "properties" : {
+        "tempName" : "Untitled2"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

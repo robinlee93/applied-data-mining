@@ -1,0 +1,92 @@
+\documentclass{article}
+
+\usepackage{Sweave}
+\begin{document}
+\input{question-hw3-concordance}
+
+I have a question on box cox transformation.
+\begin{Schunk}
+\begin{Sinput}
+> library(e1071)
+> library(mlbench)
+> library(caret)
+> data(Glass)
+> skewValues <- apply(Glass[,1:9], 2, skewness)
+> skewValues
+\end{Sinput}
+\begin{Soutput}
+        RI         Na         Mg         Al         Si          K         Ca 
+ 1.6027151  0.4478343 -1.1364523  0.8946104 -0.7202392  6.4600889  2.0184463 
+        Ba         Fe 
+ 3.3686800  1.7298107 
+\end{Soutput}
+\end{Schunk}
+Based on the skewness, Ba and Fe are both skewed. So I decided to use boxcoxTrans/preProcess to transform them. 
+\begin{Schunk}
+\begin{Sinput}
+> BC = apply(Glass[,-10],2, BoxCoxTrans)
+> BC[c(6,8,9)]
+\end{Sinput}
+\begin{Soutput}
+$K
+Box-Cox Transformation
+
+214 data points used to estimate Lambda
+
+Input data summary:
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.0000  0.1225  0.5550  0.4971  0.6100  6.2100 
+
+Lambda could not be estimated; no transformation is applied
+
+
+$Ba
+Box-Cox Transformation
+
+214 data points used to estimate Lambda
+
+Input data summary:
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  0.000   0.000   0.000   0.175   0.000   3.150 
+
+Lambda could not be estimated; no transformation is applied
+
+
+$Fe
+Box-Cox Transformation
+
+214 data points used to estimate Lambda
+
+Input data summary:
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+0.00000 0.00000 0.00000 0.05701 0.10000 0.51000 
+
+Lambda could not be estimated; no transformation is applied
+\end{Soutput}
+\end{Schunk}
+However, for K, Ba and Fe, the output shows that lamda cannot be estimated, thus no transformation is applied. Why is this the case?
+
+When I use preProcess, there are only 5 variables being transformed.
+\begin{Schunk}
+\begin{Sinput}
+> boxcoxValues = preProcess(Glass[,-10],method = "BoxCox")
+> # transform variables
+> GlassBC = predict(boxcoxValues, Glass[,-10])
+> # check if skewness is resolved
+> skewValues2 <- apply(GlassBC, 2, skewness)
+> skewValues2
+\end{Sinput}
+\begin{Soutput}
+         RI          Na          Mg          Al          Si           K 
+ 1.56566039  0.03384644 -1.13645228  0.09105899 -0.65090568  6.46008890 
+         Ca          Ba          Fe 
+-0.19395573  3.36867997  1.72981071 
+\end{Soutput}
+\begin{Sinput}
+> 
+\end{Sinput}
+\end{Schunk}
+Variables like K, Ba, Fe are not transformed with BoxCox.
+Why?
+
+\end{document}

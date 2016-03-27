@@ -1,0 +1,18 @@
+{
+    "contents" : "\n\n\\title{HW1 For Applied Data Mining \\\\ STAT W 3026-4026 \\\\ Spring 2016 \\\\ Columbia University}\n\\author{\n       Your Name  \\\\\n               Uni ID\\\\\n        Your Department and Year}\n\\date{\\today}\n\n\\documentclass[12pt]{article}\n\n\\makeatletter\n\\newcommand*{\\rom}[1]{\\expandafter\\@slowromancap\\romannumeral #1@}\n\\makeatother\n\\usepackage{amsthm,amsmath,graphicx,csquotes}\n\\usepackage[\n         colorlinks=true,\n         linkcolor=black,\n         citecolor=black,\n         urlcolor=black]\n         {hyperref}  \n         \n\\newtheorem{thm}{Theorem}\n\\newtheorem{defn}{Definition}\n%\\newtheorem{rem}{Remark}\n%\\newtheorem{lem}{Lemma}\n\\newtheorem{prop}{Property}\n\n\n\\begin{document}\n\\maketitle\n\n\\begin{abstract}\n\\end{abstract}\n\n\\section{Introduction}\n\n\n\n\n\\section{Discussion and Conclusion}\n\n\n\\end{document}\n",
+    "created" : 1458746160279.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2724661413",
+    "id" : "5C2F1059",
+    "lastKnownWriteTime" : 1455483114,
+    "path" : "~/stat-apm/template.Rnw",
+    "project_path" : "template.Rnw",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "type" : "sweave"
+}
